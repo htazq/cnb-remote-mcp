@@ -19,13 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Third-party notices:
-
-- This project is designed for use with the CNB.cool platform. CNB, the CNB
-  name and the CNB platform are properties of their respective owners. This
-  project is not affiliated with, endorsed by, or sponsored by CNB.
-- Runtime dependencies are distributed under their own licenses:
-  @modelcontextprotocol/sdk (MIT), express (MIT), zod (MIT).
