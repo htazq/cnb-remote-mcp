@@ -1,0 +1,46 @@
+# CNB CI pipeline for cnb-remote-mcp.
+# Runs lint and tests, then validates the Docker image build on push and PR.
+# Docker images are built but not pushed to the registry by this pipeline.
+
+main:
+  push:
+    - name: test
+      services:
+        - docker
+      stages:
+        - name: install & verify
+          image: node:22
+          script:
+            - npm ci
+            - npm run typecheck
+            - npm run lint
+            - npm test
+        - name: docker build
+          script:
+            - docker info
+            - docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
+  pull_request:
+    - name: test
+      services:
+        - docker
+      stages:
+        - name: install & verify
+          image: node:22
+          script:
+            - npm ci
+            - npm run typecheck
+            - npm run lint
+            - npm test
+        - name: docker build
+          script:
+            - docker info
+            - docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
+  api_trigger_npc:
+    - name: npc
+      stages:
+        - name: npc go
+          type: npc:go
+          options:
+            role: $role
+            systemPrompt: $systemPrompt
+            userPrompt: $userPrompt

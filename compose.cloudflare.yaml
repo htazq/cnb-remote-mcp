@@ -1,0 +1,21 @@
+# Use WITH compose.yaml / 与 compose.yaml 一起使用。
+# Cloudflare published application service URL: http://cnb-remote-mcp:3000
+# Set its HTTP Host Header to the hostname in MCP_PUBLIC_BASE_URL.
+# 在 Cloudflare 路由中设置服务地址及 HTTP Host Header，详见 docs/deployment.*.md。
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set the Cloudflare connector TUNNEL_TOKEN in .env}
+    depends_on:
+      cnb-remote-mcp:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

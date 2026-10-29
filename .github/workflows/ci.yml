@@ -1,0 +1,53 @@
+name: CI
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=high
+      - name: Validate Compose and build image
+        env:
+          CNB_TOKEN: ci-mock-upstream
+          MCP_ACCESS_TOKENS: ci-mock-client
+          TUNNEL_TOKEN: ci-mock-connector
+        run: |
+          docker compose config --quiet
+          docker compose -f compose.yaml -f compose.cloudflare.yaml config --quiet
+          docker build -t cnb-remote-mcp:ci .
+          docker run --rm --entrypoint git cnb-remote-mcp:ci --version
+      - name: Container smoke test
+        env:
+          CNB_TOKEN: ci-mock-upstream
+          MCP_ACCESS_TOKENS: ci-mock-client
+        run: |
+          docker run -d --name mcp-ci -p 127.0.0.1:3000:3000 \
+            -e CNB_TOKEN -e MCP_ACCESS_TOKENS cnb-remote-mcp:ci
+          trap 'docker logs mcp-ci; docker rm -f mcp-ci' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/healthz; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3000/healthz
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/mcp)" = 401
+          curl -fsS http://127.0.0.1:3000/mcp \
+            -H "Authorization: Bearer ${MCP_ACCESS_TOKENS}" \
+            -H 'Content-Type: application/json' \
+            -H 'Accept: application/json, text/event-stream' \
+            --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+            | node --input-type=module -e 'let s="";for await(const c of process.stdin)s+=c;const r=JSON.parse(s);if(!r.result?.tools?.some(t=>t.name==="whoami")||r.result.tools.some(t=>t.name==="code_push_files"))process.exit(1)'

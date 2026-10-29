@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Runtime data (git workspaces, token store, audit log)
+data/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Workspace artifacts
+.Trash-0/
+
+# Local secrets and release archives
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.zip
+*.tar.gz
